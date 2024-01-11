@@ -1,0 +1,107 @@
+﻿@page "/addClientMembership/{clientId}/{barCode}"
+
+<MatToastContainer />
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+else
+{
+    <h1>Add membership for client: @clientId</h1>
+    <div class="form-group">
+        <label for="membership" class="control-label">Membership</label>
+        <select form="membership" class="form-control" @bind="@selectedMembershipId">
+            @foreach (var memShip in memShips)
+            {
+                <option value="@memShip.Id">@memShip.Name</option>
+            }
+        </select>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <input type="button" class="btn btn-primary" @onclick="@CreateClientMembership" value="Add membership" />
+                <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+            </div>
+        </div>
+    </div>
+}
+
+
+
+@code {
+    // route parameters
+    [Parameter]
+    public string clientId { get; set; }
+    [Parameter]
+    public string barCode { get; set; }
+
+    bool isLoading = false;
+    List<Membership> memShips = new List<Membership>();
+    int selectedMembershipId;
+
+    // before rendering we load the memberships from the db
+    protected override async Task OnInitializedAsync()
+    {
+        memShips = await Task.Run(() => membershipService.GetMemberships());
+        if(memShips.Count > 0)
+        {
+            selectedMembershipId = memShips[0].Id;
+        }
+    }
+
+    /*
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        int userType = await sessionStorage.GetItemAsync<int>("userType");
+        if (userType != 0)
+        {
+            NavigationManager.NavigateTo("notAuthorized/addClientMembership");
+            return;
+        }
+        isLoading = false;
+    }
+    */
+
+    // function for creating a membership for a client
+    protected void CreateClientMembership()
+    {
+        ClientMembership clientMembership = new ClientMembership();
+        Membership selectedMembership = memShips.FirstOrDefault(m => m.Id == selectedMembershipId);
+        DateTime current_date = DateTime.Now;
+
+        clientMembership.Client_Id = Convert.ToInt32(clientId);
+        clientMembership.Membership_Id = selectedMembership.Id;
+        clientMembership.Buying_Date = current_date;
+        clientMembership.Bar_Code = barCode;
+        clientMembership.Price = selectedMembership.Price;
+        clientMembership.Available_until = current_date.AddDays(selectedMembership.Days_available);
+        clientMembership.First_Usage_Date = new DateTime();
+        clientMembership.Gym_Id = selectedMembership.Gym_id;
+
+        clientMembershipService.AddClientMembership(clientMembership);
+        NavigationManager.NavigateTo("clientMemberships");
+        ShowToast(MatToastType.Success, "Success", "Membership added successfully.");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("clientMemberships");
+    }
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

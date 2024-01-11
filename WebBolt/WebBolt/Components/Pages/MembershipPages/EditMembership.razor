@@ -1,0 +1,96 @@
+﻿@page "/editMembership/{CurrentId}"
+<PageTitle>EditMembership</PageTitle>
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+else
+{
+    <h1>Update Membership</h1>
+
+    <form>
+        <div class="row">
+            <div class="form-group">
+                <label for="Name" class="control-label">Name</label>
+                <input form="Name" class="form-control" @bind="@member.Name" />
+            </div>
+            <div class="form-group">
+                <label for="Price" class="control-label">Price</label>
+                <input form="Price" class="form-control" @bind="@member.Price" />
+            </div>
+            <div class="form-group">
+                <label for="Days_available" class="control-label">Days Available</label>
+                <input form="Days_available" class="form-control" @bind="@member.Days_available" />
+            </div>
+            <div class="form-group">
+                <label for="Entries_available" class="control-label">Entries Available</label>
+                <input form="Entries_available" class="form-control" @bind="@member.Entries_available" />
+            </div>
+            <div class="form-group">
+                <label for="Start_time" class="control-label">Start Time</label>
+                <input form="Start_time" class="form-control" type="time" @bind="@start_time" />
+            </div>
+            <div class="form-group">
+                <label for="End_time" class="control-label">End Time</label>
+                <input form="End_time" class="form-control" type="time" @bind="@end_time" />
+            </div>
+            <div class="form-group">
+                <label for="Usable_number" class="control-label">Usable Number</label>
+                <input form="Usable_number" class="form-control" @bind="@member.Usable_number" />
+            </div>
+            <div class="form-group">
+                <label for="Is_deleted" class="control-label">IsDeleted</label>
+                <input form="Is_deleted" class="form-control" @bind="@member.Is_deleted" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="button" class="btn btn-primary" @onclick="@UpdateClient" value="Update Membeship" />
+                    <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+                </div>
+            </div>
+        </div>
+    </form>
+}
+@code {
+    [Parameter]
+    public string? CurrentId { get; set; }
+    bool isLoading = true;
+    Membership member = new();
+    DateTimeOffset start_time;
+    DateTimeOffset end_time;
+
+    protected override async Task OnInitializedAsync()
+    {
+        member = await Task.Run(() => membershipService.GetMembershipById(Convert.ToInt32(CurrentId)));
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        int userType = await sessionStorage.GetItemAsync<int>("userType");
+        if (userType != 0)
+        {
+            NavigationManager.NavigateTo("notAuthorized/editClient");
+            return;
+        }
+        isLoading = false;
+        StateHasChanged();
+    }
+    protected void UpdateClient()
+    {
+        String message = membershipService.UpdateMembership(member);
+        NavigationManager.NavigateTo("memberships");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("memberships");
+    }
+    
+}

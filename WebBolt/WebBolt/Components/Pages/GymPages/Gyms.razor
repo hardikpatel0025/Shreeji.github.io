@@ -1,0 +1,141 @@
+﻿@page "/gyms"
+<MatToastContainer />
+<PageTitle>Gym</PageTitle>
+
+@if (gymList == null)
+{
+    <h1>Gyms</h1>
+    <div>Loading...</div>
+    <div class="loader"></div>
+}
+else
+{
+    <div class="page-header">
+        <h1>Gyms</h1>
+        @if (userType == 0)
+        {
+            @* <NavLink class="nav-link" href="addGym"> *@
+                <MatButton Raised="true" Label="Add" Icon="add_circle" @onclick="@(_=> { DialogAddOpen = true; })"></MatButton>
+           @*  </NavLink> *@
+        }
+    </div>
+
+    @if (gymList.Count > 0)
+    {
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    @if (userType == 0)
+                    {
+                        <th>ID</th>
+                        <th>Name</th>
+                    }
+                    else
+                    {
+                        <th>Name</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var gym in gymList)
+                {
+                    <tr>
+
+                        @if (userType == 0)
+                        {
+                            <td>@gym.Gym_id</td>
+                            <td>@gym.Name</td>
+                            <td>
+                                <a class="nav-link" href="deleteGym/@gym.Gym_id">
+                                    <span class="oi oi-trash" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>@gym.Name</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <h3>There are no gyms yet.</h3>
+    }
+
+}
+
+<MatDialog @bind-IsOpen="@DialogAddOpen" Class="matdialog-override-max-width">
+    <MatDialogContent>
+        @if (isLoading)
+        {
+            <div class="loader"></div>
+        }
+        else
+        {
+            <h3>Add gym</h3>
+            <form method="post">
+                <div class="form-group">
+                    <input form="Name" class="form-control" style="margin-bottom:5px;" placeholder="Add Gym Name" @bind="@gym.Name" />
+                </div>
+            </form>
+        }
+        <MatDialogActions>
+            <MatButton Raised="true" OnClick="@CreateGym" Class="mr-5" Style="margin-right:5px;">Save</MatButton>
+            <MatButton Raised="true" @onclick="@(_ => { DialogAddOpen = false; })">Cancel</MatButton>
+        </MatDialogActions>
+    </MatDialogContent>
+
+</MatDialog>
+@code {
+    List<Gym> gymList;
+    int userType = 1;
+    Gym gym = new Gym();
+    int currentPage = 1;
+    List<Gym> paginatedGyms = new List<Gym>();
+    public bool DialogAddOpen, isLoading;
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    protected override async Task OnInitializedAsync()
+    {
+        gymList = await Task.Run(() => gymService.GetGyms());
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        userType = await sessionStorage.GetItemAsync<int>("userType");
+        StateHasChanged();
+    }
+    protected void CreateGym()
+    {
+        String message = gymService.AddGym(gym);
+        DialogAddOpen = false;
+        ShowToast(MatToastType.Success, "Success", $"Gym Added Successfully.");
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad:true);
+        StateHasChanged();
+    }
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("gyms");
+    }
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

@@ -1,0 +1,140 @@
+﻿@page "/memberships"
+<MatToastContainer />
+@if (memberships == null)
+{
+    <h1>Membership types</h1>
+    <div>Loading...</div>
+    <div class="loader"></div>
+}
+else
+{
+    <div class="page-header">
+        <h1>Membership types</h1>
+        @if (userType == 0)
+        {
+            <NavLink class="nav-link" href="addMembership">
+                <span class="oi oi-plus" aria-hidden="true" style="margin-right:10px"></span>Add new
+            </NavLink>
+        }
+    </div>
+
+    @if (memberships.Count > 0)
+    {
+        <table style="width:100%" class="table table-striped">
+            <thead>
+                <tr>
+                    @if (userType == 0)
+                    {
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Gym</th>
+                        <th>Price</th>
+                        <th>Days</th>
+                        <th>Entries</th>
+                        <th>Start time</th>
+                        <th>End time</th>
+                        <th>Entry on same day</th>
+                    }
+                    else
+                    {
+                        <th>Name</th>
+                        <th>Gym</th>
+                        <th>Price</th>
+                        <th>Days</th>
+                        <th>Entries</th>
+                        <th>Start time</th>
+                        <th>End time</th>
+                        <th>Entry on same dayr</th>
+                    }
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var memShip in memberships)
+                {
+                    <tr>
+                        @if (userType == 0)
+                        {
+                            <td>@memShip.Id</td>
+                            <td>@memShip.Name</td>
+                            <td>@getGymById(memShip.Gym_id).Name</td>
+                            <td>@memShip.Price</td>
+                            <td>@(memShip.Days_available == 0 ? "-" : memShip.Days_available)</td>
+                            <td>@(memShip.Entries_available == 0 ? "-" : memShip.Entries_available)</td>
+                            <td>@memShip.Start_time</td>
+                            <td>@memShip.End_time</td>
+                            <td>@(memShip.Usable_number == 0 ? "-" : memShip.Usable_number)</td>
+                            <td>
+                                <a class="nav-link" href="editMembership/@memShip.Id">
+                                    <span class="oi oi-pencil" aria-hidden="true" style="margin-right:10px"></span>
+                                </a>
+                            </td>
+                            <td>
+                                <a class="nav-link" href="inactivateMembership/@memShip.Id">
+                                    <span class="oi oi-trash" aria-hidden="true" style="margin-right:10px"></span>Inactivate
+                                </a>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>@memShip.Name</td>
+                            <td>@getGymById(memShip.Gym_id).Name</td>
+                            <td>@memShip.Price</td>
+                            <td>@(memShip.Days_available == 0 ? "-" : memShip.Days_available)</td>
+                            <td>@(memShip.Entries_available == 0 ? "-" : memShip.Entries_available)</td>
+                            <td>@memShip.Start_time</td>
+                            <td>@memShip.End_time</td>
+                            <td>@(memShip.Usable_number == 0 ? "-" : memShip.Usable_number)</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <h3>There are no memberships yet.</h3>
+    }
+}
+
+@code {
+    List<Membership> memberships;
+    List<Gym> gyms = new List<Gym>();
+    int currentPage = 1;
+    List<Membership> paginatedMemberships = new List<Membership>();
+
+    int userType = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        memberships = await Task.Run(() => membershipService.GetMemberships());
+        gyms = await Task.Run(() => gymService.GetGyms());
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        userType = await sessionStorage.GetItemAsync<int>("userType");
+        StateHasChanged();
+    }
+
+    public Gym getGymById(int id)
+    {
+        return gyms.FirstOrDefault(g => g.Gym_id == id);
+    }
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

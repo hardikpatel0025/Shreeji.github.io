@@ -1,0 +1,158 @@
+﻿@page "/clientMemberships"
+<MatToastContainer />
+<div class="page-header">
+    <h1>Client memberships</h1>
+</div>
+@if (isLoading)
+{
+    <div>Loading...</div>
+    <div class="loader"></div>
+}
+else
+{
+    if (clientMemShipList.Count > 0)
+    {
+        // if the user is admin, we see all the client memberships
+        if (userType == 0)
+        {
+            <table style="width:100%" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Client</th>
+                        <th>Membership</th>
+                        <th>Gym</th>
+                        <th>Buying date</th>
+                        <th>Current entries</th>
+                        <th>Price</th>
+                        <th>Available until</th>
+                        <th>First usage</th>
+                        <th>Bar code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var memShip in clientMemShipList)
+                    {
+                        <tr>
+                            <td>@memShip.Client_Membership_Id</td>
+                            <td>@GetClientById(memShip.Client_Id).Name</td>
+                            <td>@GetMembershipById(memShip.Membership_Id).Name</td>
+                            <td>@GetGymById(memShip.Gym_Id).Name</td>
+                            <td>@memShip.Buying_Date</td>
+                            <td>@memShip.Entry_Count</td>
+                            <td>@memShip.Price</td>
+                            <td>@memShip.Available_until</td>
+                            <td>@(memShip.First_Usage_Date == new DateTime() ? "-" : memShip.First_Usage_Date)</td>
+                            <td>@memShip.Bar_Code</td>
+                            <td>
+                                <a class="nav-link" href="editClientMembership/@memShip.Client_Membership_Id">
+                                    <span class="oi oi-pencil" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <table style="width:100%" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Membership</th>
+                        <th>Gym</th>
+                        <th>Buying date</th>
+                        <th>Current entries</th>
+                        <th>Price</th>
+                        <th>Available until</th>
+                        <th>First usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var memShip in clientMemShipList)
+                    {
+                        if (memShip.Client_Id == userId)
+                        {
+                            <tr>
+                                <td>@GetMembershipById(memShip.Membership_Id).Name</td>
+                                <td>@GetGymById(memShip.Gym_Id).Name</td>
+                                <td>@memShip.Buying_Date</td>
+                                <td>@memShip.Entry_Count</td>
+                                <td>@memShip.Price</td>
+                                <td>@memShip.Available_until</td>
+                                <td>@(memShip.First_Usage_Date == new DateTime() ? "-" : memShip.First_Usage_Date)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+    }
+    else
+    {
+        <h3>There are no memberships yet.</h3>
+    }
+}
+
+@code {
+    List<ClientMembership> clientMemShipList = new List<ClientMembership>();
+    List<ClientModel> clients = new List<ClientModel>();
+    List<Gym> gyms = new List<Gym>();
+    List<Membership> memberships = new List<Membership>();
+
+    int currentPage = 1;
+    List<ClientMembership> paginatedClientMemberships = new List<ClientMembership>();
+
+    int userType = 1;
+    int userId;
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clients = await Task.Run(() => objClientService.GetClients());
+        gyms = await Task.Run(() => gymService.GetGyms());
+        memberships = await Task.Run(() => membershipService.GetMemberships());
+        clientMemShipList = await Task.Run(() => clientMembershipService.GetClientMemberships());
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        userType = await sessionStorage.GetItemAsync<int>("userType");
+        userId = await sessionStorage.GetItemAsync<int>("userId");
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    public ClientModel GetClientById(int id)
+    {
+        return clients.FirstOrDefault(c => c.Client_id == id);
+    }
+
+    public Gym GetGymById(int id)
+    {
+        return gyms.FirstOrDefault(c => c.Gym_id == id);
+    }
+
+    public Membership GetMembershipById(int id)
+    {
+        return memberships.FirstOrDefault(c => c.Id == id);
+    }
+
+    
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

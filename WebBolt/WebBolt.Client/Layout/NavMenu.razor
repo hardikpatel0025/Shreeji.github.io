@@ -1,0 +1,74 @@
+﻿@rendermode InteractiveAuto
+@if (loggedIn == 1)
+{
+    @if (isClientUser == 0)
+    {
+        @* <FluentDesignTheme Mode="DesignThemeModes.Light" OfficeColor="OfficeColor.Teams"> *@
+            <div class="navmenu">
+                <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
+                <label for="navmenu-toggle" class="navmenu-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" /></label>
+                <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
+                    <FluentNavMenu Id="main-menu" Width="250" Collapsible="true" Title="Navigation menu" @bind-Expanded="expanded">
+
+                        <FluentNavLink Href="clients" Icon="@(new Icons.Regular.Size20.BookContacts())" IconColor="Color.Accent">Clients</FluentNavLink>
+                        <FluentNavLink Href="clientEntry" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Client Entry</FluentNavLink>
+                        <FluentNavLink Href="entries" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Entries</FluentNavLink>
+                        <FluentNavLink Href="clientMemberships" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Client Membership</FluentNavLink>
+                        <FluentNavLink Href="actorlist" Icon="@(new Icons.Regular.Size20.Person5())" IconColor="Color.Accent">Actors</FluentNavLink>
+                        <FluentNavLink Href="memberships" Icon="@(new Icons.Regular.Size20.Person5())" IconColor="Color.Accent">Memberships</FluentNavLink>
+                        <FluentNavLink Href="gyms" Icon="@(new Icons.Regular.Size20.BookContacts())" IconColor="Color.Accent">Gyms</FluentNavLink>
+                        <FluentNavLink Href="weather" Icon="@(new Icons.Regular.Size20.Cloud())" IconColor="Color.Accent">Weather</FluentNavLink>
+                        <FluentNavLink Href="/" Icon="@(new Icons.Regular.Size20.ArrowExit())" IconColor="Color.Accent" OnClick="@Logout">Logout</FluentNavLink>
+                    <FluentNavLink Icon="@(new Icons.Regular.Size20.PlugConnectedSettings())"   Href="/Register">Register</FluentNavLink>
+                    </FluentNavMenu>
+                </nav>
+            </div>
+        @* </FluentDesignTheme> *@
+    }
+    else
+    {
+        <FluentDesignTheme Mode="DesignThemeModes.System" OfficeColor="OfficeColor.Teams">
+            <div class="navmenu">
+                <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
+                <label for="navmenu-toggle" class="navmenu-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" /></label>
+                <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
+                    <FluentNavMenu Id="main-menu" Width="250" Collapsible="true" Title="Navigation menu" @bind-Expanded="expanded">
+                        <FluentNavLink Href="entries" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Entries</FluentNavLink>
+                        <FluentNavLink Href="clientMemberships" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Client Membership</FluentNavLink>
+                        <FluentNavLink Href="memberships" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Membership Types</FluentNavLink>
+                        <FluentNavLink Href="/" Icon="@(new Icons.Regular.Size20.ArrowExit())" IconColor="Color.Accent" OnClick="@Logout">Logout</FluentNavLink>
+                    </FluentNavMenu>
+                </nav>
+            </div>
+        </FluentDesignTheme>
+    }
+}
+
+@code {
+    private bool expanded = true;
+
+    public int loggedIn { get; set; } = 0;
+    public int isClientUser { get; set; }
+    private bool collapseNavMenu = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 1)
+        {
+            isClientUser = await sessionStorage.GetItemAsync<int>("userType");
+        }
+        else
+        {
+            isClientUser = await sessionStorage.GetItemAsync<int>("userType");
+        }
+        StateHasChanged();
+    }
+    private async Task Logout()
+    {
+        await sessionStorage.SetItemAsync("loggedIn", 0);
+        loggedIn = 0;
+        StateHasChanged();
+        NavigationManager.NavigateTo("/login");
+    }
+}
