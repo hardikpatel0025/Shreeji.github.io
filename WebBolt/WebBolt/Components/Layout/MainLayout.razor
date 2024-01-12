@@ -5,10 +5,14 @@
         <FluentHeader>
             WebBolt
             <FluentSpacer />
-            <FluentNavLink Href="/" Style="margin-right:10px;">Login</FluentNavLink>
-            <FluentNavLink Href="/" Style="margin-right:10px;">Login</FluentNavLink>
-            <FluentNavLink Href="/" Style="margin-right:10px;">Login</FluentNavLink>
-            <FluentNavLink Href="/" Style="margin-right:10px;">Login</FluentNavLink>
+            @if (loggedIn == 0)
+            {
+                <FluentNavLink Href="/login" Style="margin-right:10px;margin-bottom:25px;">Login</FluentNavLink>
+            }
+            else
+            {
+                <FluentNavLink Href="/login" Style="margin:0 0 25px 0">Logout</FluentNavLink>
+            }
         </FluentHeader>
         
         <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
@@ -28,7 +32,7 @@
             </div>
         </FluentFooter>
     </FluentLayout>
-</FluentDesignTheme>`
+</FluentDesignTheme>
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
@@ -50,12 +54,5 @@
             isClientUser = await sessionStorage.GetItemAsync<int>("userType");
         }
         StateHasChanged();
-    }
-    private async Task Logout()
-    {
-        await sessionStorage.SetItemAsync("loggedIn", 0);
-        loggedIn = 0;
-        StateHasChanged();
-        NavigationManager.NavigateTo("/login");
     }
 }

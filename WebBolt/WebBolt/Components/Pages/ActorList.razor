@@ -1,4 +1,4 @@
-﻿@page "/ActorList"
+﻿    @page "/ActorList"
 @* <SpinLoader IsLoading="@(_actors == null)">
     <LoadingTemplate><Wave Center="true" /></LoadingTemplate>
     <ContentTemplate>
@@ -61,7 +61,7 @@
 }
 else
 {
-    <FluentDataGrid Id="weathergrid" Pagination=@pagination Items=@actorsQueryable GridTemplateColumns="1fr 1fr 1fr 2fr" TGridItem=ActorInfo>
+    <FluentDataGrid Id="weathergrid" Pagination=@pagination Items=@actorsQueryable GridTemplateColumns="1fr 1fr 1fr 2fr" ResizableColumns="true">
         <PropertyColumn Title="First Name" Property="@(c => c!.FirstName)" Sortable="true" Align=Align.Start />
         <PropertyColumn Title="Last Name" Property="@(c => c!.FamilyName)" Sortable="true" Align=Align.Center />
         <PropertyColumn Title="Date of Birth" Property="@(c => c!.DoB)" Sortable="true" Align=Align.Center />

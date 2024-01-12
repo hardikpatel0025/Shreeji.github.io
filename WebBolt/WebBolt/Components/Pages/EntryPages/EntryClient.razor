@@ -102,11 +102,11 @@ else
         }
     }
 
-    String bar_code;
+    String? bar_code;
 
     bool canEntry = true;
     bool isFirstUsage = false;
-    String entriesLeft;
+    String? entriesLeft;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -265,8 +265,9 @@ else
         {
             config.ShowCloseButton = true;
             config.ShowProgressBar = true;
-            config.MaximumOpacity = 500;
-            config.ShowTransitionDuration = 10000;
+            config.MaximumOpacity = 100;
+            config.ShowTransitionDuration = 2000;
+            config.VisibleStateDuration = 5000;
         });
     }
 }
