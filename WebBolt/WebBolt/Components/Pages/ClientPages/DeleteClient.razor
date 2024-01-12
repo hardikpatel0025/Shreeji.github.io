@@ -1,0 +1,85 @@
+﻿@page "/deleteClient/{CurrentId}"
+@* <MatToastContainer /> *@
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+else
+{
+    <h1>Delete Client</h1>
+    <h3>Are you sure you want to delete this?</h3>
+
+    <div class="row">
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Client ID:</label>
+                <label>@client.Client_id</label>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <label>@client.Name</label>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <input type="button" class="btn btn-danger" @onclick="@RemoveClient" value="Delete" />
+                <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string CurrentId { get; set; }
+    bool isLoading = true;
+    ClientModel client = new ClientModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = await Task.Run(() => objClientService.GetClientById(Convert.ToInt32(CurrentId)));
+    }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+    //     if (loggedIn == 0)
+    //     {
+    //         NavigationManager.NavigateTo("login");
+    //     }
+
+    //     int userType = await sessionStorage.GetItemAsync<int>("userType");
+    //     if (userType != 0)
+    //     {
+    //         NavigationManager.NavigateTo("notAuthorized/deleteClient");
+    //         return;
+    //     }
+    //     isLoading = false;
+    //     StateHasChanged();
+    // }
+
+    protected void RemoveClient()
+    {
+        String message = objClientService.DeleteClient(client);
+        //ShowToast(MatToastType.Success, "Success", $"Client Deleted Successfully.");
+        NavigationManager.NavigateTo("clients");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("clients");
+    }
+    // // private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    // // {
+    // //     _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+    // //     {
+    // //         config.ShowCloseButton = true;
+    // //         config.ShowProgressBar = true;
+    // //         config.MaximumOpacity = 500;
+    // //         config.ShowTransitionDuration = 10000;
+    // //     });
+    // // }
+}

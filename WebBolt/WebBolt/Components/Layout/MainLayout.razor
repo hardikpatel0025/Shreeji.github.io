@@ -1,0 +1,58 @@
+﻿@inherits LayoutComponentBase
+
+<FluentDesignTheme Mode="DesignThemeModes.Light" OfficeColor="OfficeColor.Teams">
+    <FluentLayout>
+        <FluentHeader>
+            WebBolt
+            <FluentSpacer />
+            @if (loggedIn == 0)
+            {
+                <FluentNavLink Href="/login" Style="margin-right:10px;margin-bottom:25px;">Login</FluentNavLink>
+            }
+            else
+            {
+                <FluentNavLink Href="/login" Style="margin:0 0 25px 0">Logout</FluentNavLink>
+            }
+        </FluentHeader>
+        
+        <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
+            <NavMenu />
+            <FluentBodyContent>
+                <div class="content">
+                    @Body
+                </div>
+            </FluentBodyContent>
+        </FluentStack>
+        <FluentFooter>
+            <div class="link1">
+                <a href="https://www.fluentui-blazor.net" target="_blank">Documentation and demos</a>
+            </div>
+            <div class="link2">
+                <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor" target="_blank">About Blazor</a>
+            </div>
+        </FluentFooter>
+    </FluentLayout>
+</FluentDesignTheme>
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    public int loggedIn { get; set; } = 0;
+    public int isClientUser { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 1)
+        {
+            isClientUser = await sessionStorage.GetItemAsync<int>("userType");
+        }
+        else
+        {
+            isClientUser = await sessionStorage.GetItemAsync<int>("userType");
+        }
+        StateHasChanged();
+    }
+}

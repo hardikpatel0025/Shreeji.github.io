@@ -1,0 +1,128 @@
+﻿@page "/addMembership"
+<MatToastContainer />
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+else
+{
+    <h1>Add membership type</h1>
+
+    <form>
+        <div class="form-group">
+            <label for="Name" class="control-label">Name</label>
+            <input form="Name" class="form-control" @bind="@memShip.Name" />
+        </div>
+        <div class="form-group">
+            <label for="gym" class="control-label">Gym</label>
+            <select form="gym" class="form-control" @bind="@selectedGymId">
+                @foreach (var gym in gyms)
+                {
+                    <option value="@gym.Gym_id">@gym.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="Price" class="control-label">Price</label>
+            <input form="Price" class="form-control" type="number" @bind="@memShip.Price" />
+        </div>
+        <div class="form-group">
+            <label for="Days" class="control-label">Days available</label>
+            <input form="Days" class="form-control" type="number" @bind="@memShip.Days_available" />
+        </div>
+        <div class="form-group">
+            <label for="Entries" class="control-label">Entries available</label>
+            <input form="Entries" class="form-control" type="number" @bind="@memShip.Entries_available" />
+        </div>
+        <div class="form-group">
+            <label for="Start_time" class="control-label">From</label>
+            <input form="Start_time" class="form-control" type="time" @bind="@start_time" />
+        </div>
+        <div class="form-group">
+            <label for="End_time" class="control-label">Until</label>
+            <input form="End_time" class="form-control" type="time" @bind="@end_time" />
+        </div>
+        <div class="form-group" style="margin-bottom:50px;">
+            <label for="max-entry" class="control-label">Max. number of entries a day</label>
+            <input form="max-entry" class="form-control" type="number" @bind="@memShip.Usable_number" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="button" class="btn btn-primary" @onclick="@CreateMembership" value="Add membership" />
+                    <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+
+@code {
+    bool isLoading = true;
+    Membership memShip = new Membership();
+    List<Gym> gyms = new List<Gym>();
+    int selectedGymId;
+
+    DateTimeOffset start_time;
+    DateTimeOffset end_time;
+
+    protected override async Task OnInitializedAsync()
+    {
+        gyms = await Task.Run(() => gymService.GetGyms());
+        if(gyms.Count > 0)
+        {
+            selectedGymId = gyms[0].Gym_id;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        int userType = await sessionStorage.GetItemAsync<int>("userType");
+        if (userType != 0)
+        {
+            NavigationManager.NavigateTo("notAuthorized/addMembership");
+            return;
+        }
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    protected void CreateMembership()
+    {
+        memShip.Start_time = start_time.TimeOfDay.ToString();
+        memShip.End_time = end_time.TimeOfDay.ToString();
+        memShip.Gym_id = selectedGymId;
+
+        String message = membershipService.AddMembership(memShip);
+        ShowToast(MatToastType.Info, "Info", $"Membership Added Successfully");
+        NavigationManager.NavigateTo("memberships");
+    }
+
+    public Gym GetGymById(int id)
+    {
+        return gyms.FirstOrDefault(g => g.Gym_id == id);
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("memberships");
+    }
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

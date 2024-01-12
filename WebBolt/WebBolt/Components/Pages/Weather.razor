@@ -1,0 +1,68 @@
+﻿@page "/weather"
+@attribute [StreamRendering]
+
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather</h1>
+
+<p>This component demonstrates showing data.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <FluentDataGrid Id="weathergrid" Pagination=@pagination Items=@forecasts ResizableColumns="true">
+        <PropertyColumn Title="Date" Property="@(c => c!.Date)" Sortable="true" Align=Align.Start/>
+        <PropertyColumn Title="Temp. (C)" Property="@(c => c!.TemperatureC)" Sortable="true" Align=Align.Center/>
+        <PropertyColumn Title="Temp. (F)" Property="@(c => c!.TemperatureF)" Sortable="true" Align=Align.Center/>
+        <TemplateColumn Title="Condition" Sortable="true" Align=Align.Center>
+            @if(context.TemperatureC > 21)
+            {
+                <FluentIcon Value="@(new Icons.Regular.Size20.WeatherHailNight())" Color="@Color.Neutral" />
+            }
+            else
+            {
+                <FluentIcon Value="@(new Icons.Regular.Size20.TimeAndWeather())" Color="@Color.Neutral" />
+            }
+        </TemplateColumn>
+        <PropertyColumn Title="Summary" Property="@(c => c!.Summary)" Sortable="true" Align=Align.End/>
+    </FluentDataGrid>
+    <FluentPaginator State="@pagination">
+        <SummaryTemplate>
+            There are <strong>@(pagination.TotalItemCount ?? 0)</strong> rows
+        </SummaryTemplate>
+        <PaginationTextTemplate>
+            This is page <strong>@(pagination.CurrentPageIndex + 1)</strong> out of a total of <strong>@(pagination.LastPageIndex + 1)</strong> pages
+        </PaginationTextTemplate>
+    </FluentPaginator>
+
+}
+
+@code {
+    private IQueryable<WeatherForecast>? forecasts;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+
+        var startDate = DateOnly.FromDateTime(DateTime.Now);
+        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
+        forecasts = Enumerable.Range(1, 30).Select(index => new WeatherForecast
+        {
+            Date = startDate.AddDays(index),
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = summaries[Random.Shared.Next(summaries.Length)]
+        }).AsQueryable();
+    }
+
+    private class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+}

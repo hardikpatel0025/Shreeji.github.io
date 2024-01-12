@@ -1,0 +1,72 @@
+﻿
+<MatToastContainer />
+<PageTitle>Gym</PageTitle>
+
+
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+else
+{
+    <h1>Add gym</h1>
+    <form>
+        <div class="form-group">
+            <label for="Name" class="control-label">Name</label>
+            <input form="Name" class="form-control" @bind="@gym.Name" />
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="button" class="btn btn-primary" @onclick="@CreateGym" value="Add gym" />
+                    <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+@code {
+    bool isLoading = true;
+    Gym gym = new Gym();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        int userType = await sessionStorage.GetItemAsync<int>("userType");
+        if (userType != 0)
+        {
+            NavigationManager.NavigateTo("notAuthorized/addGym");
+            return;
+        }
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    protected void CreateGym()
+    {
+
+        String message = gymService.AddGym(gym);
+        ShowToast(MatToastType.Info, "Info", message);
+        NavigationManager.NavigateTo("gyms");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("gyms");
+    }
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

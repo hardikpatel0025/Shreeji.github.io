@@ -1,0 +1,126 @@
+﻿    @page "/ActorList"
+@* <SpinLoader IsLoading="@(_actors == null)">
+    <LoadingTemplate><Wave Center="true" /></LoadingTemplate>
+    <ContentTemplate>
+        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" class="mt-2 mb-4" Text="Add" Click="@InsertRow" id="btn-add" />
+        <RadzenDataGrid @ref="ActorGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or" EditMode="DataGridEditMode.Single" AllowPaging="true" PageSize="15" AllowSorting="true"
+                    Data="@_actors" TItem="ActorInfo" RowCreate="@OnCreateRow">
+            <Columns>
+                <RadzenDataGridColumn TItem="ActorInfo" Property="FirstName" Title="First Name" CssClass="custom-table-width">
+                    <EditTemplate Context="order">
+                        <RadzenTextBox @bind-Value="order.FirstName" Style="width: 100%; display: block" Name="FirstName" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ActorInfo" Property="FamilyName" Title="Family Name">
+                    <EditTemplate Context="order">
+                        <RadzenTextBox @bind-Value="order.FamilyName" Style="width: 100%; display: block" Name="FamilyName" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ActorInfo" Property="DoB" Title="Date Of Birth">
+                    <EditTemplate Context="order">
+                        <RadzenDatePicker @bind-Value="order.DoB" Style="width: 100%" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ActorInfo" Property="DoD" Title="Date Of Debut">
+                    <EditTemplate Context="order">
+                        <RadzenDatePicker @bind-Value="order.DoD" Style="width: 100%" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ActorInfo" Property="GenderType" Title="Gender">
+                    <EditTemplate Context="order">
+                        <RadzenTextBox @bind-Value="order.GenderType" Style="width: 100%; display: block" Name="GenderType" />
+                    </EditTemplate>
+                    @*<EditTemplate Context="order">
+                            <RadzenTextBox @bind-Value="order.Gender" Style="width:100%; display: block" Name="Gender" />
+                        </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ActorInfo" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                    <Template Context="order">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(order))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-2 ms-2" Click="@(args => DeleteRow(order))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="order">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(order))">
+                        </RadzenButton>
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-2 ms-2" Click="@((args) => CancelEdit(order))">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-2 ms-2" Click="@(args => DeleteRow(order))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </ContentTemplate>
+</SpinLoader> *@
+
+@if (actorsQueryable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <FluentDataGrid Id="weathergrid" Pagination=@pagination Items=@actorsQueryable GridTemplateColumns="1fr 1fr 1fr 2fr" ResizableColumns="true">
+        <PropertyColumn Title="First Name" Property="@(c => c!.FirstName)" Sortable="true" Align=Align.Start />
+        <PropertyColumn Title="Last Name" Property="@(c => c!.FamilyName)" Sortable="true" Align=Align.Center />
+        <PropertyColumn Title="Date of Birth" Property="@(c => c!.DoB)" Sortable="true" Align=Align.Center />
+        <PropertyColumn Title="Date of Debut" Property="@(c => c!.DoD)" Sortable="true" Align=Align.End />
+    </FluentDataGrid>
+    <FluentPaginator State="@pagination">
+        <SummaryTemplate>
+            There are <strong>@(pagination.TotalItemCount ?? 0)</strong> rows
+        </SummaryTemplate>
+        <PaginationTextTemplate>
+            This is page <strong>@(pagination.CurrentPageIndex + 1)</strong> out of a total of <strong>@(pagination.LastPageIndex + 1)</strong> pages
+        </PaginationTextTemplate>
+    </FluentPaginator>
+}
+@code {
+    IQueryable<ActorInfo>? actorsQueryable;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    protected override async Task OnInitializedAsync()
+    {
+        List<ActorInfo> actorsList = (await ActorRepository.GetActorAsync()).ToList();
+        actorsQueryable = actorsList.AsQueryable();
+
+        //_actors = await ActorRepository.GetActorAsync();
+    }
+
+    // public async void OnCreateRow(ActorInfo actor)
+    // {
+    //     await ActorRepository.AddActorAsync(actor);
+    // }
+    // void EditRow(ActorInfo actor)
+    // {
+    //     ActorGrid.EditRow(actor);
+    // }
+    // public async void SaveRow(ActorInfo actor)
+    // {
+    //     await ActorGrid.UpdateRow(actor);
+
+    //     await ActorRepository.UpdateActorAsync(actor);
+    // }
+    // void CancelEdit(ActorInfo actor)
+    // {
+    //     ActorGrid.CancelEditRow(actor);
+    // }
+    // public async void DeleteRow(ActorInfo actor)
+    // {
+    //     if (_actors.Contains(actor))
+    //     {
+    //         _actors.Remove(actor);
+    //         await ActorRepository.DeleteActorAsync(actor.ActorID);
+    //         await ActorGrid.Reload();
+    //     }
+    //     else
+    //     {
+    //         ActorGrid.CancelEditRow(actor);
+    //     }
+
+    // }
+    // public async void InsertRow()
+    // {
+    //     await ActorGrid.InsertRow(new ActorInfo());
+    // }
+}

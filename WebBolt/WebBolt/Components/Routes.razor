@@ -1,0 +1,20 @@
+﻿<FluentDesignTheme Mode="DesignThemeModes.Light" OfficeColor="OfficeColor.Teams">
+<Router AppAssembly="@typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Client._Imports).Assembly }">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+            <div id="notfound">
+                <div class="notfound">
+                    <div class="notfound-404">
+                        <h1>404</h1>
+                    </div>
+                    <h2>Page not found</h2>
+                    <p class="lead">The page you are looking for might have been removed had its name changed or is temporarily unavailable.</p>
+                    <a href="/">Go To Homepage</a>
+                </div>
+            </div>
+    </NotFound>
+</Router>
+</FluentDesignTheme>

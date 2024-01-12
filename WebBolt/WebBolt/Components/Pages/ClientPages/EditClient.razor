@@ -1,0 +1,95 @@
+﻿@page "/editClient/{CurrentId}"
+@* <MatToastContainer /> *@
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+else
+{
+    <h1>Update Client</h1>
+
+    <form>
+        <div class="row">
+            <div class="form-group">
+                <label for="Name" class="control-label">Name</label>
+                <input form="Name" class="form-control" @bind="@client.Name" />
+            </div>
+            <div class="form-group">
+                <label for="Phone" class="control-label">Phone number</label>
+                <input form="phone" class="form-control" @bind="@client.Phone_number" />
+            </div>
+            <div class="form-group">
+                <label for="Email" class="control-label">Email</label>
+                <input form="Email" class="form-control" @bind="@client.Email" />
+            </div>
+            <div class="form-group">
+                <label for="Pin" class="control-label">PIN</label>
+                <input form="Pin" class="form-control" @bind="@client.PIN" />
+            </div>
+            <div class="form-group">
+                <label for="Address" class="control-label">Address</label>
+                <input form="Address" class="form-control" @bind="@client.Address" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="button" class="btn btn-primary" @onclick="@UpdateClient" value="Update client" />
+                    <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+@code {
+    [Parameter]
+    public string CurrentId { get; set; }
+    bool isLoading = true;
+    ClientModel client = new ClientModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = await Task.Run(() => objClientService.GetClientById(Convert.ToInt32(CurrentId)));
+    }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+    //     if (loggedIn == 0)
+    //     {
+    //         NavigationManager.NavigateTo("login");
+    //     }
+
+    //     int userType = await sessionStorage.GetItemAsync<int>("userType");
+    //     if (userType != 0)
+    //     {
+    //         NavigationManager.NavigateTo("notAuthorized/editClient");
+    //         return;
+    //     }
+    //     isLoading = false;
+    //     StateHasChanged();
+    // }
+
+    protected void UpdateClient()
+    {
+        String message = objClientService.UpdateClient(client);
+        //ShowToast(MatToastType.Success, "Success", $"Client Updated Successfully");
+        NavigationManager.NavigateTo("clients");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("clients");
+    }
+    // private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    // {
+    //     _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+    //     {
+    //         config.ShowCloseButton = true;
+    //         config.ShowProgressBar = true;
+    //         config.MaximumOpacity = 500;
+    //         config.ShowTransitionDuration = 2000;
+    //     });
+    // }
+}

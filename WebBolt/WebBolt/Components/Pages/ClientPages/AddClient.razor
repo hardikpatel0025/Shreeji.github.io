@@ -1,0 +1,202 @@
+﻿@page "/addClient"
+<MatToastContainer />
+<PageTitle>AddClient</PageTitle>
+@if (!isLoading)
+{
+    <h3>Add Client</h3>
+
+    <form>
+        <div class="form-group">
+            <label for="Name" class="control-label">Name</label>
+            <input form="Name" class="form-control" @bind="@client.Name" required />
+            <div class="invalid-feedback">
+                Please provide a Name.
+            </div>
+        </div>
+        <div class="form-group input-photo__group">
+            <div>@mimetype</div>
+            <div>
+                <label for="Photo">Photo: </label>
+                @if (clientPhoto != null)
+                {
+                    <img form="Photo" alt="client-photo" class="form__client-photo" src="data:image/png;base64,@(Convert.ToBase64String(clientPhoto))" />
+                }
+            </div>
+            <InputFile class="image_input" OnChange="@loadImage" />
+        </div>
+        <div class="form-group">
+            <label for="Phone" class="control-label" required>Phone number</label>
+            <input form="phone" class="form-control" @bind="@client.Phone_number" />
+            <div class="invalid-feedback">
+                Please provide a Phone Number.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="Email" class="control-label">Email</label>
+            <input form="Email" type="email" class="form-control" @bind="@client.Email" required />
+            <div class="invalid-feedback">
+                Please provide a Email.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="Password" class="control-label">Password</label>
+            <input form="Password" type="password" class="form-control" @bind="@client.Password" required />
+            <div class="invalid-feedback">
+                Please provide a Password.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="Pin" class="control-label">PIN</label>
+            <input form="Pin" class="form-control" @bind="@client.PIN" required />
+            <div class="invalid-feedback">
+                Please provide a PIN.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="Address" class="control-label">Address</label>
+            <input form="Address" class="form-control" @bind="@client.Address" required />
+            <div class="invalid-feedback">
+                Please provide a Address.
+            </div>
+        </div>
+        <div class="form-group">
+            <input form="membership-cb" type="checkbox" @bind="@needMembership" />
+            <label for="membership-cb">Add membership</label>
+        </div>
+        @if (needMembership)
+        {
+            <div class="form-group">
+                <label for="membership" class="control-label">Membership</label>
+                <select form="membership" class="form-control" @bind="@selectedMembershipIndex">
+                    @foreach (var memShip in memShips)
+                    {
+                        <option value="@memShip.Id">@memShip.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="button" class="btn btn-primary" @onclick="@CreateClient" value="Add client" />
+                    <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+                </div>
+            </div>
+        </div>
+    </form>
+
+}
+else
+{
+    <div class="loader"></div>
+}
+@code {
+    bool isLoading = false;
+    IBrowserFile selectedImage;
+    String mimetype = "";
+    byte[] clientPhoto;
+    ClientModel client = new ClientModel();
+    int newClientId;
+
+    bool needMembership = false;
+    List<Membership> memShips = new List<Membership>();
+    int selectedMembershipIndex;
+
+    protected override async Task OnInitializedAsync()
+    {
+        memShips = await Task.Run(() => membershipService.GetMemberships());
+    }
+
+    /*
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        int userType = await sessionStorage.GetItemAsync<int>("userType");
+        if (userType != 0)
+        {
+            NavigationManager.NavigateTo("notAuthorized/addClient");
+            return;
+        }
+        isLoading = false;
+    }
+    */
+
+    public async Task loadImage(InputFileChangeEventArgs e)
+    {
+        selectedImage = e.File;
+        Regex rx = new Regex(@"^image.*");
+        MatchCollection matches = rx.Matches(selectedImage.ContentType);
+        if (matches.Count == 0)
+        {
+            //ShowToast(MatToastType.Danger, "Error", $"Invalid file format.");
+        }
+        else
+        {
+            MemoryStream stream = new MemoryStream();
+            await selectedImage.OpenReadStream().CopyToAsync(stream);
+
+            long length = selectedImage.Size;
+            clientPhoto = new byte[length];
+            clientPhoto = stream.ToArray();
+        }
+    }
+
+    protected void CreateClient()
+    {
+
+        string bar_code = Guid.NewGuid().ToString();
+        DateTime current_date = DateTime.Now;
+
+        client.Bar_code = bar_code;
+        client.Inserted_date = current_date;
+        client.Photo = clientPhoto;
+
+        if (needMembership)
+        {
+            CreateClientMembership();
+        }
+        newClientId = objClientService.AddClient(client);
+
+        //ShowToast(MatToastType.Success, "Success", $"Client added successfully.");
+        NavigationManager.NavigateTo("clients");
+    }
+
+    protected void CreateClientMembership()
+    {
+        ClientMembership clientMembership = new ClientMembership();
+        Membership selectedMembership = memShips[selectedMembershipIndex];
+        DateTime current_date = DateTime.Now;
+
+        clientMembership.Client_Id = newClientId;
+        clientMembership.Membership_Id = selectedMembership.Id;
+        clientMembership.Buying_Date = current_date;
+        clientMembership.Bar_Code = client.Bar_code;
+        clientMembership.Price = selectedMembership.Price;
+        clientMembership.Available_until = current_date.AddDays(selectedMembership.Days_available);
+        clientMembership.First_Usage_Date = new DateTime();
+        clientMembership.Gym_Id = selectedMembership.Gym_id;
+
+        clientMembershipService.AddClientMembership(clientMembership);
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("clients");
+    }
+
+    // private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    // {
+    //     _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+    //     {
+    //         config.ShowCloseButton = true;
+    //         config.ShowProgressBar = true;
+    //         config.MaximumOpacity = 500;
+    //         config.ShowTransitionDuration = 10000;
+    //     });
+    // }
+}

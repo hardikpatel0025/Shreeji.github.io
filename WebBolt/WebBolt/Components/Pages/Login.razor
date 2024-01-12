@@ -1,0 +1,94 @@
+﻿@page "/"
+@page "/login"
+<MatToastContainer />
+<PageTitle>Login</PageTitle>
+<div style="width:800px; margin:0 auto; margin-top:200px;margin-right:275px;">
+    
+    <FluentCard Width="400px" Height="300px" >
+        <ChildContent>
+            <FluentLabel Typo="Typography.PaneHeader" Style="margin-bottom:5px; text-align:center;">
+                Login
+            </FluentLabel>
+            <form>
+                <div class="form-group" style="margin-bottom:40px;">
+                    <input form="Email" class="form-control" type="email" @bind="@userEmail" placeholder="Email" required />
+                </div>
+                <div class="form-group" style="margin-bottom:40px;">
+                    <input form="Password" class="form-control" type="password" @bind="@userPassword" placeholder="Password" required />
+                </div>
+                <div class="form">
+                    <div class="form-group">
+                        @* <input type="button" class="btn btn-primary" @onclick="@TryToLogin" value="Log in" style="margin:0px auto; display:block;" /> *@
+                        <FluentButton Loading="@loading" OnClick="@TryToLogin" Appearance="Appearance.Accent">Login</FluentButton>
+                        @* @if (loading == true)
+                        {
+                            <FluentProgressRing Min="0" Max="100" Value="75"></FluentProgressRing>
+                            <FluentProgressRing></FluentProgressRing>
+                        } *@
+                    </div>
+                </div>
+            </form>
+        </ChildContent>
+    </FluentCard>
+</div>
+
+
+@code {
+
+    public bool loading { get; set; } = false;
+    public int loggedIn { get; set; }
+    public int userId { get; set; }
+    public ClientModel user { get; set; }
+    public String userEmail { get; set; } = "";
+    public String userPassword { get; set; } = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 1)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task TryToLogin()
+    {
+        loading = true;
+        user = await Task.Run(() => objClientService.GetClientByEmail(userEmail));
+        loading = false;
+        if (user == null)
+        {
+            ShowToast(MatToastType.Danger, "Error", $"Incorrect email.");
+            return;
+        }
+
+        if (userPassword != user.Password)
+        {
+            ShowToast(MatToastType.Danger, "Error", $"Incorrect Password.");
+            return;
+        }
+
+        await sessionStorage.SetItemAsync("loggedIn", 1);
+        await sessionStorage.SetItemAsync("userType", user.User_type);
+        await sessionStorage.SetItemAsync("userId", user.Client_id);
+        if (user.User_type == 0)
+        {
+            NavigationManager.NavigateTo("home");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("entries");
+        }
+    }
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}

@@ -1,0 +1,132 @@
+﻿@page "/editClientMembership/{CurrentId}"
+<MatToastContainer />
+<PageTitle>EditClientMambership</PageTitle>
+<h3>Edit ClientMambership</h3>
+@if (isLoading)
+{
+    <div class="loader"></div>
+}
+@if (clientMembership != null)
+{
+    <form>
+        <div class="form-group">
+            <label>Client:</label>
+            <select @bind="clientMembership.Client_Id" class="form-control">
+                @foreach (var client in clients)
+                {
+                    <option value="@client.Client_id">@client.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Membership:</label>
+            <select @bind="clientMembership.Membership_Id" class="form-control">
+                @foreach (var membership in memberships)
+                {
+                    <option value="@membership.Id">@membership.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Gym:</label>
+            <select @bind="clientMembership.Gym_Id" class="form-control">
+                @foreach (var gym in gyms)
+                {
+                    <option value="@gym.Gym_id">@gym.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Buying Date:</label>
+            <input type="date" @bind="clientMembership.Buying_Date" class="form-control" />
+        </div>
+         <div class="form-group">
+            <label>Current entries:</label>
+            <input type="number" @bind="clientMembership.Entry_Count" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label>Price:</label>
+            <input type="number" @bind="clientMembership.Price" class="form-control" />
+        </div>
+         <div class="form-group">
+            <label>Available until:</label>
+            <input type="date" @bind="clientMembership.Available_until" class="form-control" />
+        </div>
+
+        <!-- Other ClientMembership fields -->
+        <!-- Add other fields as needed -->
+
+        <button type="button" @onclick="UpdateClientMembership" class="btn btn-primary">Update</button>
+        <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+    </form>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    [Parameter]
+    public string? CurrentId { get; set; }
+    bool isLoading = true;
+    ClientMembership clientMembership = new();
+    List<ClientModel> clients = new List<ClientModel>();
+    List<Gym> gyms = new List<Gym>();
+    List<Membership> memberships = new List<Membership>();
+    DateTimeOffset Buying_Date;
+    DateTimeOffset Available_until;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientMembership = await Task.Run(() => clientMembershipService.GetClientMembershipById(Convert.ToInt32(CurrentId)));
+        clients = await Task.Run(() => objClientService.GetClients());
+        gyms = await Task.Run(() => gymService.GetGyms());
+        memberships = await Task.Run(() => membershipService.GetMemberships());
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        int loggedIn = await sessionStorage.GetItemAsync<int>("loggedIn");
+        if (loggedIn == 0)
+        {
+            NavigationManager.NavigateTo("login");
+        }
+
+        int userType = await sessionStorage.GetItemAsync<int>("userType");
+        if (userType != 0)
+        {
+            NavigationManager.NavigateTo("notAuthorized/editClient");
+            return;
+        }
+        isLoading = false;
+        StateHasChanged();
+    }
+    protected void UpdateClientMembership()
+    {
+        String message = clientMembershipService.UpdateClientMembership(clientMembership);
+        NavigationManager.NavigateTo("clientMemberships");
+        ShowToast(MatToastType.Success, "Success", "Client Membership Updated successfully.");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("clientMemberships");
+    }
+
+    public ClientModel GetClientById(int id) => clients.FirstOrDefault(c => c.Client_id == id);
+
+    public Gym GetGymById(int id) => gyms.FirstOrDefault(c => c.Gym_id == id);
+
+    public Membership GetMembershipById(int id) => memberships.FirstOrDefault(c => c.Id == id);
+
+
+    private void ShowToast(MatToastType type, string toastTitle, string toastMessage, string icon = "")
+    {
+        _toaster.Add(toastMessage, type, toastTitle, icon, config =>
+        {
+            config.ShowCloseButton = true;
+            config.ShowProgressBar = true;
+            config.MaximumOpacity = 500;
+            config.ShowTransitionDuration = 10000;
+        });
+    }
+}
